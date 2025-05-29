@@ -2,7 +2,7 @@
 # Run and Gun
 ## A Multiplayer Strategy/Shooter
 
-![Cybperunk 2048](Cyberpunk2048)
+![Cybperunk 2048](cyberpunk2048.png)
 
 ## The Rules of Cyberpunk:
 
