@@ -2,7 +2,7 @@
 # Run and Gun
 ## A Multiplayer Strategy/Shooter
 
-![Cybperunk 2048](./Labyrinth.png)
+![Cybperunk 2048](.ChatGPT Image May 29, 2025, 10_05_38 AM.png)
 
 ## The Rules of Cyberpunk:
 
