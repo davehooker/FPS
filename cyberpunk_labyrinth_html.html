@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Neon Grid Wars - Cyberpunk Territory Control</title>
+        <!-- Enable fullscreen mode when launched from home screen -->
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <!-- Control the status bar appearance -->
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <!-- Disable automatic phone number detection -->
+        <meta name="format-detection" content="telephone=no">
+        <!-- Set the viewport -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+        <meta charset="utf-8">
+        <!-- favicon -->
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>💜</text></svg>"></link>
+        
+        <!-- Cyberpunk Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+        
+        <style>
+            * {
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+            @keyframes neonPulse {
+                0%, 100% { 
+                    filter: brightness(1) drop-shadow(0 0 10px currentColor);
+                }
+                50% { 
+                    filter: brightness(1.2) drop-shadow(0 0 20px currentColor) drop-shadow(0 0 30px currentColor);
+                }
+            }
+
+            @keyframes glitchAnimation {
+                0%, 100% { transform: translate(0); }
+                20% { transform: translate(-2px, 2px); }
+                40% { transform: translate(-2px, -2px); }
+                60% { transform: translate(2px, 2px); }
+                80% { transform: translate(2px, -2px); }
+            }
+
+            @keyframes scanline {
+                0% { transform: translateY(-100%); }
+                100% { transform: translateY(100vh); }
+            }
+
+            @keyframes dataStream {
+                0% { transform: translateY(0) scaleY(1); opacity: 0; }
+                10% { opacity: 1; }
+                90% { opacity: 1; }
+                100% { transform: translateY(100vh) scaleY(3); opacity: 0; }
+            }
+
+            body {
+                overflow: hidden;
+                background: #0a0a0a;
+                font-family: 'Rajdhani', sans-serif;
+                position: relative;
+            }
+
+            /* Animated background */
+            body::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: 
+                    radial-gradient(circle at 20% 50%, #9D00FF22 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, #FF006E22 0%, transparent 50%),
+                    radial-gradient(circle at 40% 20%, #00D4FF22 0%, transparent 50%),
+                    linear-gradient(180deg, #0a0a0a 0%, #1a0a2a 100%);
+                pointer-events: none;
+                z-index: 0;
+            }
+
+            /* Scanline effect */
+            body::after {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 2px;
+                background: linear-gradient(to bottom, transparent, #9D00FF44, transparent);
+                animation: scanline 8s linear infinite;
+                pointer-events: none;
+                z-index: 9999;
+            }
+
+            /* Data rain effect */
+            .data-stream {
+                position: fixed;
+                top: -100px;
+                width: 2px;
+                height: 100px;
+                background: linear-gradient(to bottom, transparent, #9D00FF, transparent);
+                animation: dataStream 3s linear infinite;
+                pointer-events: none;
+                z-index: 1;
+            }
+
+            .text-display {
+                position: fixed;
+                bottom: 40px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-family: 'Orbitron', monospace;
+                font-size: 14px;
+                color: #00FFFF;
+                background: linear-gradient(135deg, rgba(157, 0, 255, 0.2), rgba(0, 212, 255, 0.1));
+                border: 1px solid #00FFFF44;
+                padding: 8px 16px;
+                border-radius: 4px;
+                z-index: 1000;
+                pointer-events: none;
+                max-width: 80%;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                box-shadow: 
+                    inset 0 0 20px rgba(0, 255, 255, 0.1),
+                    0 0 20px rgba(157, 0, 255, 0.3);
+            }
+
+            .minimap-wrapper {
+                position: fixed;
+                top: 30px;
+                left: 50%;
+                transform: translateX(-50%);
+                pointer-events: auto;
+                z-index: 1000;
+            }
+
+            .minimap {
+                position: relative;
+                width: 220px;
+                height: 220px;
+                background: rgba(0, 0, 0, 0.8);
+                border: 2px solid #9D00FF;
+                transform-origin: center center;
+                pointer-events: auto;
+                display: none;
+                box-shadow: 
+                    inset 0 0 30px rgba(157, 0, 255, 0.3),
+                    0 0 30px rgba(157, 0, 255, 0.5),
+                    0 0 50px rgba(157, 0, 255, 0.3);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .minimap::before {
+                content: '';
+                position: absolute;
+                top: -2px;
+                left: -2px;
+                right: -2px;
+                bottom: -2px;
+                background: linear-gradient(45deg, #9D00FF, #00D4FF, #FF006E, #FFB700, #9D00FF);
+                background-size: 300% 300%;
+                border-radius: 4px;
+                opacity: 0.7;
+                z-index: -1;
+                animation: neonPulse 4s ease-in-out infinite;
+            }
+
+            .compass {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 50%;
+                height: 8px;
+                background: linear-gradient(90deg, #FF00FF 0%, #00FFFF 100%);
+                transform-origin: 0 50%;
+                pointer-events: none;
+                z-index: 1001;
+                filter: drop-shadow(0 0 10px #FF00FF) drop-shadow(0 0 20px #00FFFF);
+                clip-path: polygon(0 50%, 10% 0, 90% 25%, 100% 50%, 90% 75%, 10% 100%);
+                animation: neonPulse 2s ease-in-out infinite;
+            }
+
+            .countdown {
+                position: fixed;
+                top: 40vh;
+                right: 20px;
+                transform: translateY(-50%);
+                font-family: 'Orbitron', monospace;
+                font-size: 42px;
+                font-weight: 900;
+                color: #FF006E;
+                background: linear-gradient(135deg, rgba(255, 0, 110, 0.2), rgba(0, 0, 0, 0.8));
+                border: 2px solid #FF006E;
+                padding: 15px 25px;
+                border-radius: 4px;
+                z-index: 1000;
+                text-shadow: 
+                    0 0 10px #FF006E,
+                    0 0 20px #FF006E,
+                    0 0 30px #FF006E;
+                letter-spacing: 4px;
+                pointer-events: none;
+                box-shadow: 
+                    inset 0 0 20px rgba(255, 0, 110, 0.3),
+                    0 0 30px rgba(255, 0, 110, 0.5);
+                clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+            }
+
+            /* Glitch effect for countdown when low */
+            .countdown.warning {
+                animation: glitchAnimation 0.3s infinite;
+                color: #FF0040;
+            }
+
+            .box-score {
+                position: fixed;
+                left: 20px;
+                top: 40vh;
+                transform: translateY(-50%);
+                background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(157, 0, 255, 0.1));
+                border: 2px solid #9D00FF44;
+                padding: 20px;
+                border-radius: 4px;
+                font-family: 'Rajdhani', sans-serif;
+                color: white;
+                z-index: 1000;
+                overflow: hidden;
+                transition: all 0.3s ease;
+                box-shadow: 
+                    inset 0 0 30px rgba(157, 0, 255, 0.2),
+                    0 0 40px rgba(157, 0, 255, 0.3);
+                clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px));
+            }
+
+            .box-score::before {
+                content: 'FACTION CONTROL';
+                position: absolute;
+                top: -20px;
+                left: 20px;
+                font-family: 'Orbitron', monospace;
+                font-size: 12px;
+                font-weight: 700;
+                color: #9D00FF;
+                text-shadow: 0 0 10px #9D00FF;
+                letter-spacing: 2px;
+            }
+
+            .score-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 15px;
+                margin: 4px 0;
+                width: calc(100% - 30px);
+                transition: all 0.5s ease;
+                position: relative;
+                left: 0;
+                background: rgba(0, 0, 0, 0.5);
+                border-radius: 2px;
+                font-weight: 500;
+                font-size: 18px;
+            }
+
+            .score-row:hover {
+                transform: translateX(5px);
+                box-shadow: 0 0 20px currentColor;
+            }
+
+            .faction {
+                margin-right: 15px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            /* Cyberpunk Faction Colors */
+            .netrunners { 
+                color: #9D00FF;
+                text-shadow: 0 0 10px #9D00FF;
+            }
+            .corpo { 
+                color: #00D4FF;
+                text-shadow: 0 0 10px #00D4FF;
+            }
+            .samurai { 
+                color: #FFB700;
+                text-shadow: 0 0 10px #FFB700;
+            }
+            .psycho { 
+                color: #FF006E;
+                text-shadow: 0 0 10px #FF006E;
+            }
+
+            .score {
+                font-family: 'Orbitron', monospace;
+                font-weight: 700;
+                font-size: 24px;
+                min-width: 50px;
+                text-align: right;
+            }
+
+            .center-icon {
+                position: fixed;
+                left: 50%;
+                bottom: 100px;
+                transform: translateX(-50%);
+                z-index: 1000;
+                pointer-events: none;
+                display: block;
+                filter: drop-shadow(0 0 20px #9D00FF) drop-shadow(0 0 40px #9D00FF);
+                animation: neonPulse 3s ease-in-out infinite;
+            }
+
+            .center-icon img {
+                display: block;
+                width: 48px;
+                height: 48px;
+                object-fit: contain;
+            }
+
+            .version-display {
+                position: fixed;
+                bottom: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 12px;
+                color: #9D00FF66;
+                z-index: 1000;
+                pointer-events: none;
+                font-family: 'Orbitron', monospace;
+                text-shadow: 0 0 5px #9D00FF33;
+                letter-spacing: 1px;
+            }
+
+            .fullscreen-button {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                background: linear-gradient(135deg, rgba(157, 0, 255, 0.3), rgba(0, 0, 0, 0.8));
+                border: 2px solid #9D00FF44;
+                border-radius: 4px;
+                padding: 10px;
+                cursor: pointer;
+                color: #9D00FF;
+                font-size: 32px;
+                width: 50px;
+                height: 50px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+                pointer-events: auto;
+                box-shadow: 
+                    inset 0 0 20px rgba(157, 0, 255, 0.2),
+                    0 0 30px rgba(157, 0, 255, 0.3);
+            }
+
+            .fullscreen-button:hover {
+                transform: scale(1.1);
+                border-color: #9D00FF;
+                color: #FF00FF;
+                box-shadow: 
+                    inset 0 0 30px rgba(157, 0, 255, 0.4),
+                    0 0 50px rgba(157, 0, 255, 0.5);
+            }
+
+            .fullscreen-button:active {
+                transform: scale(0.95);
+            }
+
+            .victory-display {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                z-index: 2000;
+                pointer-events: none;
+                background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(157, 0, 255, 0.2));
+                border: 3px solid #9D00FF;
+                padding: 40px;
+                border-radius: 4px;
+                box-shadow: 
+                    inset 0 0 50px rgba(157, 0, 255, 0.3),
+                    0 0 100px rgba(157, 0, 255, 0.5),
+                    0 0 200px rgba(157, 0, 255, 0.3);
+                clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 30px 100%, 0 calc(100% - 30px));
+            }
+
+            .victory-icon {
+                width: 50vh;
+                height: 50vh;
+                max-width: 50vw;
+                max-height: 50vw;
+                object-fit: contain;
+                display: block;
+                filter: drop-shadow(0 0 50px currentColor);
+            }
+
+            .victory-text {
+                font-family: 'Orbitron', monospace;
+                font-size: 56px;
+                font-weight: 900;
+                margin-top: 30px;
+                text-transform: uppercase;
+                letter-spacing: 4px;
+                animation: neonPulse 1s ease-in-out infinite;
+            }
+
+            #codelink {
+                position: fixed;
+                bottom: 10px;
+                right: 10px;
+                padding: .5em 1em;
+                border-radius: 2px;
+                background: linear-gradient(135deg, rgba(157, 0, 255, 0.3), rgba(0, 0, 0, 0.8));
+                border: 1px solid #9D00FF44;
+                color: #9D00FF;
+                text-decoration: none;
+                font-family: 'Orbitron', monospace;
+                font-size: 1.2em;
+                z-index: 1000;
+                transition: all 0.3s ease;
+                opacity: 0.6;
+            }
+
+            #codelink:hover {
+                opacity: 1;
+                border-color: #9D00FF;
+                box-shadow: 0 0 20px rgba(157, 0, 255, 0.5);
+                transform: translateY(-2px);
+            }
+
+            #container {
+                pointer-events: none;
+            }
+
+            /* HUD Frame Effect */
+            .hud-frame {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                pointer-events: none;
+                z-index: 999;
+            }
+
+            .hud-frame::before,
+            .hud-frame::after {
+                content: '';
+                position: absolute;
+                background: linear-gradient(to right, transparent, #9D00FF22, transparent);
+            }
+
+            .hud-frame::before {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                height: 2px;
+            }
+
+            .hud-frame::after {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                height: 2px;
+            }
+        </style>
+        <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+        <%= croquet_script %>
+    </head>
+    <body>
+        <!-- HUD Frame -->
+        <div class="hud-frame"></div>
+        
+        <!-- Data Rain Effect -->
+        <script>
+            // Generate random data streams
+            for (let i = 0; i < 15; i++) {
+                const stream = document.createElement('div');
+                stream.className = 'data-stream';
+                stream.style.left = Math.random() * 100 + '%';
+                stream.style.animationDelay = Math.random() * 3 + 's';
+                stream.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                document.body.appendChild(stream);
+            }
+        </script>
+
+        <div class="minimap-wrapper">
+            <div id="minimap" class="minimap">
+                <div id="compass" class="compass"></div>
+            </div>
+        </div>
+        
+        <div id="countdown" class="countdown">0:00</div>
+        
+        <div id="victory-display" class="victory-display" style="display: none;">
+            <img class="victory-icon" alt="Winner">
+            <div class="victory-text"></div>
+        </div>
+        
+        <div class="box-score">
+            <div class="score-row" data-faction="NetRunners">
+                <span class="faction netrunners">⚡ NetRunners</span>
+                <span class="score">0</span>
+            </div>
+            <div class="score-row" data-faction="Corpo">
+                <span class="faction corpo">◆ Corpo Elite</span>
+                <span class="score">0</span>
+            </div>
+            <div class="score-row" data-faction="Samurai">
+                <span class="faction samurai">⚔ Street Samurai</span>
+                <span class="score">0</span>
+            </div>
+            <div class="score-row" data-faction="Psycho">
+                <span class="faction psycho">☠ Cyber Psychos</span>
+                <span class="score">0</span>
+            </div>
+        </div>
+        
+        <button class="fullscreen-button" onclick="toggleFullscreen()">⛶</button>
+        
+        <div class="center-icon">
+            <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%239D00FF'>💜</text></svg>" alt="Neon Grid">
+        </div>
+        
+        <div class="version-display">v.2077.1</div>
+        <div class="text-display" id="status">SYSTEM ONLINE</div>
+        
+        <script>
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+            
+            // Add countdown warning effect
+            setInterval(() => {
+                const countdown = document.getElementById('countdown');
+                const time = countdown.textContent;
+                const [minutes, seconds] = time.split(':').map(Number);
+                const totalSeconds = minutes * 60 + seconds;
+                
+                if (totalSeconds <= 10 && totalSeconds > 0) {
+                    countdown.classList.add('warning');
+                } else {
+                    countdown.classList.remove('warning');
+                }
+            }, 100);
+        </script>
+        
+        <script type="module" src="./labyrinth.js"></script>
+    </body>
+</html>
